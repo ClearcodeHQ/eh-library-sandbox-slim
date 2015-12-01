@@ -4,14 +4,32 @@ require __DIR__.'/../vendor/autoload.php';
 
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
+use Ramsey\Uuid\Uuid;
 
 $app = new \Slim\App;
+$library = new \Clearcode\EHLibrary\Application();
 
-$app->get('/foo', function (ServerRequestInterface $request, ResponseInterface $response) {
+$app->post('/books', function (ServerRequestInterface $request, ResponseInterface $response) use ($library, $app) {
 
-    $response->write('Hello');
+    $bookId = Uuid::uuid4();
 
-    return $response;
+    $requestBody = $request->getParsedBody();
+
+    if ($requestBody === null || !isset($requestBody['title']) || !isset($requestBody['authors']) || !isset($requestBody['isbn'])) {
+        return $response
+            ->withHeader('Content-Type', 'application/json')
+            ->withStatus(400);
+    }
+
+    $responseBody = $response->getBody();
+    $responseBody->write(json_encode(['id' => (string) $bookId]));
+
+    $library->addBook($bookId, $requestBody['title'], $requestBody['authors'], $requestBody['isbn']);
+
+    return $response
+        ->withHeader('Content-Type', 'application/json')
+        ->withStatus(201)
+        ->withBody($responseBody);
 });
 
 return $app;

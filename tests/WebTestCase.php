@@ -2,6 +2,8 @@
 
 namespace tests\Clearcode\EHLibrarySandbox\Slim;
 
+use Clearcode\EHLibrary\Infrastructure\Persistence\LocalBookRepository;
+use Clearcode\EHLibrary\Infrastructure\Persistence\LocalReservationRepository;
 use Slim\App;
 use Slim\Http\Environment;
 use Slim\Http\Headers;
@@ -18,31 +20,40 @@ abstract class WebTestCase extends \PHPUnit_Framework_TestCase
     private $app;
 
     /**
+     * @param string $method
      * @param string $url
+     * @param array $routeParameters
+     * @param array $requestParameters
      */
-    protected function request($url)
+    protected function request($method, $url, array $routeParameters, array $requestParameters)
     {
-        $env = Environment::mock([
-            'SCRIPT_NAME' => '/index.php',
-            'REQUEST_URI' => $url,
-            'REQUEST_METHOD' => 'GET',
-        ]);
-
-        $uri = Uri::createFromEnvironment($env);
-        $headers = Headers::createFromEnvironment($env);
-        $cookies = [];
-        $serverParams = $env->all();
-
-        $body = new RequestBody();
-        $request = new Request('GET', $uri, $headers, $cookies, $serverParams, $body);
+        $request = $this->prepareRequest($method, $url, $routeParameters, $requestParameters);
+        $response = new Response();
 
         $app = $this->app;
-        $this->response = $app($request, new Response());;
+        $this->response = $app($request, $response);;
+    }
+
+    protected function assertThatResponseHasStatus($expectedStatus)
+    {
+        $this->assertEquals($expectedStatus, $this->response->getStatusCode());
+    }
+
+    protected function assertThatResponseHasContentType($expectedContentType)
+    {
+        $this->assertContains($expectedContentType, $this->response->getHeader('Content-Type'));
+    }
+
+    protected function assertThatResponseBodyContains($expectedString)
+    {
+        $this->assertContains($expectedString, (string) $this->response->getBody());
     }
 
     /** {@inheritdoc} */
     protected function setUp()
     {
+        $this->clearDatabase();
+
         $this->app =  $this->getApp();
     }
 
@@ -56,5 +67,33 @@ abstract class WebTestCase extends \PHPUnit_Framework_TestCase
     private function getApp()
     {
         return require __DIR__.'/../src/app.php';
+    }
+
+    private function prepareRequest($method, $url, array $routeParameters, array $requestParameters)
+    {
+        $env = Environment::mock([
+            'SCRIPT_NAME' => '/index.php',
+            'REQUEST_URI' => $url,
+            'REQUEST_METHOD' => $method,
+        ]);
+
+        $uri = Uri::createFromEnvironment($env);
+        $headers = Headers::createFromEnvironment($env);
+        $cookies = [];
+
+        $serverParams = $env->all();
+
+        $body = new RequestBody();
+        $body->write(json_encode($requestParameters));
+
+        $request = new Request($method, $uri, $headers, $cookies, $serverParams, $body);
+
+        return $request->withHeader('Content-Type', 'application/json');
+    }
+
+    private function clearDatabase()
+    {
+        (new LocalBookRepository())->clear();
+        (new LocalReservationRepository())->clear();
     }
 }
