@@ -64,6 +64,11 @@ abstract class WebTestCase extends \PHPUnit_Framework_TestCase
         $this->assertContains($expectedContentType, $this->response->getHeader('Content-Type'));
     }
 
+    protected function assertThatResponseHasNotContentType()
+    {
+        $this->assertEmpty($this->response->getHeader('Content-Type'));
+    }
+
     protected function assertThatResponseBodyContains($expectedString)
     {
         $this->assertContains($expectedString, (string) $this->response->getBody());

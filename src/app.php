@@ -113,4 +113,14 @@ $app->patch('/books/{bookId}/reservations/{reservationId}', function (ServerRequ
         ->withStatus(200);
 });
 
+//Give back book from reservation
+$app->delete('/books/{bookId}/reservations/{reservationId}', function (ServerRequestInterface $request, ResponseInterface $response, $args = []) use ($library, $app, $reservationDataValidator) {
+
+    $reservationId = Uuid::fromString($args['reservationId']);
+    $library->giveBackBookFromReservation($reservationId);
+
+    return $response
+        ->withStatus(204);
+});
+
 return $app;

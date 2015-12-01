@@ -95,4 +95,16 @@ class LibraryTest extends WebTestCase
         $this->assertThatResponseHasContentType('application/json');
         $this->assertThatResponseHasStatus(400);
     }
+
+    /** @test */
+    public function it_can_give_back_book_from_reservation()
+    {
+        $this->addBook('a7f0a5b1-b65a-4f9b-905b-082e255f6038', 'Domain-Driven Design', 'Eric Evans', '0321125215');
+        $this->addReservation('8cb7aa6f-f09c-4287-86af-013abf630fc8', 'a7f0a5b1-b65a-4f9b-905b-082e255f6038', true);
+
+        $this->request('DELETE', '/books/a7f0a5b1-b65a-4f9b-905b-082e255f6038/reservations/8cb7aa6f-f09c-4287-86af-013abf630fc8');
+
+        $this->assertThatResponseHasNotContentType();
+        $this->assertThatResponseHasStatus(204);
+    }
 }
