@@ -123,4 +123,18 @@ $app->delete('/books/{bookId}/reservations/{reservationId}', function (ServerReq
         ->withStatus(204);
 });
 
+//List reservations for book
+$app->get('/books/{bookId}/reservations', function (ServerRequestInterface $request, ResponseInterface $response, $args = []) use ($library, $app, $reservationDataValidator) {
+
+    $bookId = Uuid::fromString($args['bookId']);
+
+    $responseBody = $response->getBody();
+    $responseBody->write(json_encode($library->listReservationsForBook($bookId)));
+
+    return $response
+        ->withHeader('Content-Type', 'application/json')
+        ->withStatus(200)
+        ->withBody($responseBody);
+});
+
 return $app;

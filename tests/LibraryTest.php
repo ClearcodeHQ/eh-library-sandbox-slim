@@ -51,6 +51,16 @@ class LibraryTest extends WebTestCase
     }
 
     /** @test */
+    public function it_return_empty_list_when_no_books_in_library()
+    {
+        $this->request('GET', '/books');
+
+        $this->assertThatResponseHasContentType('application/json');
+        $this->assertThatResponseHasStatus(200);
+        $this->assertCount(0, $this->jsonResponseData);
+    }
+
+    /** @test */
     public function it_creates_reservation_for_book()
     {
         $this->addBook('a7f0a5b1-b65a-4f9b-905b-082e255f6038', 'Domain-Driven Design', 'Eric Evans', '0321125215');
@@ -106,5 +116,27 @@ class LibraryTest extends WebTestCase
 
         $this->assertThatResponseHasNotContentType();
         $this->assertThatResponseHasStatus(204);
+    }
+
+    /** @test */
+    public function it_can_list_reservations_for_book()
+    {
+        $this->addReservation('8cb7aa6f-f09c-4287-86af-013abf630fc8', 'a7f0a5b1-b65a-4f9b-905b-082e255f6038');
+
+        $this->request('GET', '/books/a7f0a5b1-b65a-4f9b-905b-082e255f6038/reservations');
+
+        $this->assertThatResponseHasContentType('application/json');
+        $this->assertThatResponseHasStatus(200);
+        $this->assertCount(1, $this->jsonResponseData);
+    }
+
+    /** @test */
+    public function it_returns_empty_list_when_no_reservations_for_book()
+    {
+        $this->request('GET', '/books/a7f0a5b1-b65a-4f9b-905b-082e255f6038/reservations');
+
+        $this->assertThatResponseHasContentType('application/json');
+        $this->assertThatResponseHasStatus(200);
+        $this->assertCount(0, $this->jsonResponseData);
     }
 }
