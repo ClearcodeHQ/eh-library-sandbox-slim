@@ -33,12 +33,12 @@ abstract class WebTestCase extends \PHPUnit_Framework_TestCase
         $this->books->save(new Book(Uuid::fromString($bookId), $title, $authors, $isbn));
     }
 
-    protected function addReservation($reservationId, $bookId, $givenAway = false)
+    protected function addReservation($reservationId, $bookId, \DateTime $givenAwayAt = null)
     {
         $reservation = new Reservation(Uuid::fromString($reservationId), Uuid::fromString($bookId), 'john@doe.com');
 
-        if ($givenAway) {
-            $reservation->giveAway(new \DateTime());
+        if (null !== $givenAwayAt) {
+            $reservation->giveAway($givenAwayAt);
         }
 
         $this->reservations->save($reservation);
