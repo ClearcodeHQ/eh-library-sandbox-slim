@@ -18,6 +18,14 @@ $bookDataValidator = function (array $bookData = null) {
     return true;
 };
 
+$givenAwayValidator = function (array $givenAwayData = null) {
+    if ($givenAwayData === null || !isset($givenAwayData['givenAwayAt'])) {
+        return false;
+    }
+
+    return true;
+};
+
 $reservationDataValidator = function (array $reservationData = null) {
     if ($reservationData === null || !isset($reservationData['email'])) {
         return false;
@@ -76,9 +84,10 @@ $app->get('/books', function (ServerRequestInterface $request, ResponseInterface
 });
 
 //Create reservation for book
-$app->post('/books/{bookId}/reservations', function (ServerRequestInterface $request, ResponseInterface $response, $args = []) use ($library, $app, $reservationDataValidator) {
+$app->post('/books/{bookId}/reservations/{reservationId}', function (ServerRequestInterface $request, ResponseInterface $response, $args = []) use ($library, $app, $reservationDataValidator) {
 
     $bookId = Uuid::fromString($args['bookId']);
+    $reservationId = Uuid::fromString($args['reservationId']);
 
     $requestBody = $request->getParsedBody();
 
@@ -88,7 +97,10 @@ $app->post('/books/{bookId}/reservations', function (ServerRequestInterface $req
             ->withStatus(400);
     }
 
-    $library->createReservation($bookId, $requestBody['email']);
+    $library->createReservation($reservationId, $bookId, $requestBody['email']);
+
+    $responseBody = $response->getBody();
+    $responseBody->write(json_encode(['id' => (string) $reservationId]));
 
     return $response
         ->withHeader('Content-Type', 'application/json')
@@ -96,12 +108,20 @@ $app->post('/books/{bookId}/reservations', function (ServerRequestInterface $req
 });
 
 //Give away reservation for book
-$app->patch('/books/{bookId}/reservations/{reservationId}', function (ServerRequestInterface $request, ResponseInterface $response, $args = []) use ($library, $app, $reservationDataValidator) {
+$app->patch('/books/{bookId}/reservations/{reservationId}', function (ServerRequestInterface $request, ResponseInterface $response, $args = []) use ($library, $app, $givenAwayValidator) {
 
     $reservationId = Uuid::fromString($args['reservationId']);
 
+    $requestBody = $request->getParsedBody();
+
+    if ($givenAwayValidator($requestBody) == false) {
+        return $response
+            ->withHeader('Content-Type', 'application/json')
+            ->withStatus(400);
+    }
+
     try {
-        $library->giveAwayBookInReservation($reservationId);
+        $library->giveAwayBookInReservation($reservationId, new \DateTime($requestBody['givenAwayAt']));
     } catch (BookInReservationAlreadyGivenAway $e) {
         return $response
             ->withHeader('Content-Type', 'application/json')

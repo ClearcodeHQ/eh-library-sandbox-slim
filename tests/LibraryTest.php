@@ -65,10 +65,11 @@ class LibraryTest extends WebTestCase
     {
         $this->addBook('a7f0a5b1-b65a-4f9b-905b-082e255f6038', 'Domain-Driven Design', 'Eric Evans', '0321125215');
 
-        $this->request('POST', '/books/a7f0a5b1-b65a-4f9b-905b-082e255f6038/reservations', ['email' => 'employee.@clearcode.cc']);
+        $this->request('POST', '/books/a7f0a5b1-b65a-4f9b-905b-082e255f6038/reservations/400af78b-1c8a-4622-b5b7-249fdd3af62e', ['email' => 'employee.@clearcode.cc']);
 
         $this->assertThatResponseHasContentType('application/json');
         $this->assertThatResponseHasStatus(201);
+        $this->assertArrayHasKey('id', $this->jsonResponseData);
     }
 
     /** @test */
@@ -76,7 +77,7 @@ class LibraryTest extends WebTestCase
     {
         $this->addBook('a7f0a5b1-b65a-4f9b-905b-082e255f6038', 'Domain-Driven Design', 'Eric Evans', '0321125215');
 
-        $this->request('POST', '/books/a7f0a5b1-b65a-4f9b-905b-082e255f6038/reservations', ['nonExpectedData']);
+        $this->request('POST', '/books/a7f0a5b1-b65a-4f9b-905b-082e255f6038/reservations/400af78b-1c8a-4622-b5b7-249fdd3af62e', ['nonExpectedData']);
 
         $this->assertThatResponseHasContentType('application/json');
         $this->assertThatResponseHasStatus(400);
@@ -88,7 +89,7 @@ class LibraryTest extends WebTestCase
         $this->addBook('a7f0a5b1-b65a-4f9b-905b-082e255f6038', 'Domain-Driven Design', 'Eric Evans', '0321125215');
         $this->addReservation('8cb7aa6f-f09c-4287-86af-013abf630fc8', 'a7f0a5b1-b65a-4f9b-905b-082e255f6038');
 
-        $this->request('PATCH', '/books/a7f0a5b1-b65a-4f9b-905b-082e255f6038/reservations/8cb7aa6f-f09c-4287-86af-013abf630fc8');
+        $this->request('PATCH', '/books/a7f0a5b1-b65a-4f9b-905b-082e255f6038/reservations/8cb7aa6f-f09c-4287-86af-013abf630fc8', ['givenAwayAt' => '2016-01-01']);
 
         $this->assertThatResponseHasContentType('application/json');
         $this->assertThatResponseHasStatus(200);
@@ -100,7 +101,7 @@ class LibraryTest extends WebTestCase
         $this->addBook('a7f0a5b1-b65a-4f9b-905b-082e255f6038', 'Domain-Driven Design', 'Eric Evans', '0321125215');
         $this->addReservation('8cb7aa6f-f09c-4287-86af-013abf630fc8', 'a7f0a5b1-b65a-4f9b-905b-082e255f6038', true);
 
-        $this->request('PATCH', '/books/a7f0a5b1-b65a-4f9b-905b-082e255f6038/reservations/8cb7aa6f-f09c-4287-86af-013abf630fc8');
+        $this->request('PATCH', '/books/a7f0a5b1-b65a-4f9b-905b-082e255f6038/reservations/8cb7aa6f-f09c-4287-86af-013abf630fc8', ['givenAwayAt' => '2016-01-01']);
 
         $this->assertThatResponseHasContentType('application/json');
         $this->assertThatResponseHasStatus(400);

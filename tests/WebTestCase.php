@@ -38,7 +38,7 @@ abstract class WebTestCase extends \PHPUnit_Framework_TestCase
         $reservation = new Reservation(Uuid::fromString($reservationId), Uuid::fromString($bookId), 'john@doe.com');
 
         if ($givenAway) {
-            $reservation->giveAway();
+            $reservation->giveAway(new \DateTime());
         }
 
         $this->reservations->save($reservation);
