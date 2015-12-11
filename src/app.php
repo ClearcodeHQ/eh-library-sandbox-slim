@@ -32,6 +32,19 @@ $reservationDataValidator = function (array $reservationData = null) {
     return true;
 };
 
+//authenticate the user with JWT token
+$authenticationMiddleware = function (ServerRequestInterface $request, ResponseInterface $response, $next) use ($library /*dependencies*/) {
+
+    /* your code here */
+
+    $user = null; /* assign user here */
+
+    $request = $request->withAttribute('user', $user);
+    $response = $next($request, $response);
+
+    return $response;
+};
+
 //Add book to library
 $app->map(['<method>'], '<url>', function (ServerRequestInterface $request, ResponseInterface $response, $args = []) use ($library /* dependencies */) {
 
@@ -42,7 +55,7 @@ $app->map(['<method>'], '<url>', function (ServerRequestInterface $request, Resp
     /* your code here */
 
     return $response;
-});
+})->add($authenticationMiddleware);
 
 //List books in library
 $app->map(['<method>'], '<url>', function (ServerRequestInterface $request, ResponseInterface $response, $args = []) use ($library /* dependencies */) {
@@ -54,7 +67,7 @@ $app->map(['<method>'], '<url>', function (ServerRequestInterface $request, Resp
     /* your code here */
 
     return $response;
-});
+})->add($authenticationMiddleware);
 
 
 //Create reservation for book
@@ -67,7 +80,7 @@ $app->map(['<method>'], '<url>', function (ServerRequestInterface $request, Resp
     /* your code here */
 
     return $response;
-});
+})->add($authenticationMiddleware);
 
 //Give away reservation for book
 $app->map(['<method>'], '<url>', function (ServerRequestInterface $request, ResponseInterface $response, $args = []) use ($library /* dependencies */) {
@@ -79,7 +92,7 @@ $app->map(['<method>'], '<url>', function (ServerRequestInterface $request, Resp
     /* your code here */
 
     return $response;
-});
+})->add($authenticationMiddleware);
 
 //Give back book from reservation
 $app->map(['<method>'], '<url>', function (ServerRequestInterface $request, ResponseInterface $response, $args = []) use ($library /* dependencies */) {
@@ -91,18 +104,19 @@ $app->map(['<method>'], '<url>', function (ServerRequestInterface $request, Resp
     /* your code here */
 
     return $response;
-});
+})->add($authenticationMiddleware);
 
 //List reservations for book
 $app->map(['<method>'], '<url>', function (ServerRequestInterface $request, ResponseInterface $response, $args = []) use ($library /* dependencies */) {
 
     /* your code here */
 
-    $responseBody= json_encode($library->listReservationsForBook(/* arguments */));
+    $responseBody = json_encode($library->listReservationsForBook(/* arguments */));
 
     /* your code here */
 
     return $response;
-});
+})->add($authenticationMiddleware);
+
 
 return $app;
