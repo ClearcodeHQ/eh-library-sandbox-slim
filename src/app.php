@@ -4,9 +4,6 @@ require __DIR__.'/../vendor/autoload.php';
 
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
-use Ramsey\Uuid\Uuid;
-use Clearcode\EHLibrary\Model\BookInReservationAlreadyGivenAway;
-use Clearcode\EHLibrary\Model\CannotGiveBackReservationWhichWasNotGivenAway;
 
 $app = new \Slim\App;
 $library = new \Clearcode\EHLibrary\Application();
@@ -36,142 +33,76 @@ $reservationDataValidator = function (array $reservationData = null) {
 };
 
 //Add book to library
-$app->put('/books/{bookId}', function (ServerRequestInterface $request, ResponseInterface $response, $args = []) use ($library, $app, $bookDataValidator) {
+$app->map(['<method>'], '<url>', function (ServerRequestInterface $request, ResponseInterface $response, $args = []) use ($library /* dependencies */) {
 
-    $bookId = Uuid::fromString($args['bookId']);
-    $requestBody = $request->getParsedBody();
+    /* your code here */
 
-    if ($bookDataValidator($requestBody) == false) {
-        return $response
-            ->withHeader('Content-Type', 'application/json')
-            ->withStatus(400);
-    }
+    $library->addBook(/* arguments */);
 
-    $responseBody = $response->getBody();
-    $responseBody->write(json_encode(['id' => (string) $bookId]));
+    /* your code here */
 
-    $library->addBook($bookId, $requestBody['title'], $requestBody['authors'], $requestBody['isbn']);
-
-    return $response
-        ->withHeader('Content-Type', 'application/json')
-        ->withStatus(201)
-        ->withBody($responseBody);
+    return $response;
 });
 
 //List books in library
-$app->get('/books', function (ServerRequestInterface $request, ResponseInterface $response, $args = []) use ($library, $app) {
+$app->map(['<method>'], '<url>', function (ServerRequestInterface $request, ResponseInterface $response, $args = []) use ($library /* dependencies */) {
 
-    $page = 1;
-    $booksPerPage = null;
+    /* your code here */
 
-    $query = $request->getQueryParams();
+    $responseBody = json_encode($library->listOfBooks(/* arguments */));
 
-    if (isset($query['page'])) {
-        $page = $query['page'];
-    }
+    /* your code here */
 
-    if (isset($query['booksPerPage'])) {
-        $booksPerPage = $query['booksPerPage'];
-    }
-
-    $responseBody = $response->getBody();
-    $responseBody->write(json_encode($library->listOfBooks($page, $booksPerPage)));
-
-    return $response
-        ->withHeader('Content-Type', 'application/json')
-        ->withStatus(200)
-        ->withBody($responseBody);
+    return $response;
 });
 
+
 //Create reservation for book
-$app->post('/reservations', function (ServerRequestInterface $request, ResponseInterface $response, $args = []) use ($library, $app, $reservationDataValidator) {
+$app->map(['<method>'], '<url>', function (ServerRequestInterface $request, ResponseInterface $response, $args = []) use ($library /* dependencies */) {
 
-    $reservationId = Uuid::uuid4();
-    $requestBody = $request->getParsedBody();
+    /* your code here */
 
-    if ($reservationDataValidator($requestBody) == false) {
-        return $response
-            ->withHeader('Content-Type', 'application/json')
-            ->withStatus(400);
-    }
+    $library->createReservation(/* arguments */);
 
-    $bookId = Uuid::fromString($requestBody['bookId']);
+    /* your code here */
 
-    $library->createReservation($reservationId, $bookId, $requestBody['email']);
-
-    $responseBody = $response->getBody();
-    $responseBody->write(json_encode(['id' => (string) $reservationId]));
-
-    return $response
-        ->withHeader('Content-Type', 'application/json')
-        ->withStatus(201);
+    return $response;
 });
 
 //Give away reservation for book
-$app->patch('/reservations/{reservationId}', function (ServerRequestInterface $request, ResponseInterface $response, $args = []) use ($library, $app, $givenAwayValidator) {
+$app->map(['<method>'], '<url>', function (ServerRequestInterface $request, ResponseInterface $response, $args = []) use ($library /* dependencies */) {
 
-    $reservationId = Uuid::fromString($args['reservationId']);
-    $requestBody = $request->getParsedBody();
+    /* your code here */
 
-    if ($givenAwayValidator($requestBody) == false) {
-        return $response
-            ->withHeader('Content-Type', 'application/json')
-            ->withStatus(400);
-    }
+    $library->giveAwayBookInReservation(/* arguments */);
 
-    try {
-        $library->giveAwayBookInReservation($reservationId, new \DateTime($requestBody['givenAwayAt']));
-    } catch (BookInReservationAlreadyGivenAway $e) {
-        return $response
-            ->withHeader('Content-Type', 'application/json')
-            ->withStatus(400);
-    }
+    /* your code here */
 
-    return $response
-        ->withHeader('Content-Type', 'application/json')
-        ->withStatus(200);
+    return $response;
 });
 
 //Give back book from reservation
-$app->delete('/reservations/{reservationId}', function (ServerRequestInterface $request, ResponseInterface $response, $args = []) use ($library, $app, $reservationDataValidator) {
+$app->map(['<method>'], '<url>', function (ServerRequestInterface $request, ResponseInterface $response, $args = []) use ($library /* dependencies */) {
 
-    $reservationId = Uuid::fromString($args['reservationId']);
+    /* your code here */
 
-    try {
-        $library->giveBackBookFromReservation($reservationId);
-    } catch (CannotGiveBackReservationWhichWasNotGivenAway $e) {
-        return $response
-            ->withHeader('Content-Type', 'application/json')
-            ->withStatus(400);
-    }
+    $library->giveBackBookFromReservation(/* arguments */);
 
-    return $response
-        ->withStatus(204);
+    /* your code here */
+
+    return $response;
 });
 
 //List reservations for book
-$app->get('/reservations', function (ServerRequestInterface $request, ResponseInterface $response, $args = []) use ($library, $app, $reservationDataValidator) {
+$app->map(['<method>'], '<url>', function (ServerRequestInterface $request, ResponseInterface $response, $args = []) use ($library /* dependencies */) {
 
-    $query = $request->getQueryParams();
+    /* your code here */
 
-    if (!isset($query['bookId'])) {
-        $responseBody = $response->getBody();
-        $responseBody->write(json_encode([]));
+    $responseBody= json_encode($library->listReservationsForBook(/* arguments */));
 
-        return $response
-            ->withHeader('Content-Type', 'application/json')
-            ->withStatus(200)
-            ->withBody($responseBody);
-    }
+    /* your code here */
 
-    $bookId = Uuid::fromString($query['bookId']);
-    $responseBody = $response->getBody();
-    $responseBody->write(json_encode($library->listReservationsForBook($bookId)));
-
-    return $response
-        ->withHeader('Content-Type', 'application/json')
-        ->withStatus(200)
-        ->withBody($responseBody);
+    return $response;
 });
 
 return $app;
