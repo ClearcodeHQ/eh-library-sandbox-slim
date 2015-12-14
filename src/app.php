@@ -20,7 +20,7 @@ $app->map(['<method>'], '<url>', function (ServerRequestInterface $request, Resp
     /* your code here */
 
     return $response;
-});
+})->setName('add_book');
 
 //List books in library
 $app->map(['<method>'], '<url>', function (ServerRequestInterface $request, ResponseInterface $response, $args = []) use ($library /* dependencies */) {
@@ -32,7 +32,7 @@ $app->map(['<method>'], '<url>', function (ServerRequestInterface $request, Resp
     /* your code here */
 
     return $response;
-});
+})->setName('list_books');
 
 
 //Create reservation for book
@@ -45,7 +45,7 @@ $app->map(['<method>'], '<url>', function (ServerRequestInterface $request, Resp
     /* your code here */
 
     return $response;
-});
+})->setName('create_reservation');
 
 //Give away reservation for book
 $app->map(['<method>'], '<url>', function (ServerRequestInterface $request, ResponseInterface $response, $args = []) use ($library /* dependencies */) {
@@ -57,7 +57,7 @@ $app->map(['<method>'], '<url>', function (ServerRequestInterface $request, Resp
     /* your code here */
 
     return $response;
-});
+})->setName('give_away_a_book');
 
 //Give back book from reservation
 $app->map(['<method>'], '<url>', function (ServerRequestInterface $request, ResponseInterface $response, $args = []) use ($library /* dependencies */) {
@@ -69,7 +69,7 @@ $app->map(['<method>'], '<url>', function (ServerRequestInterface $request, Resp
     /* your code here */
 
     return $response;
-});
+})->setName('give_back_a_book');
 
 //List reservations for book
 $app->map(['<method>'], '<url>', function (ServerRequestInterface $request, ResponseInterface $response, $args = []) use ($library /* dependencies */) {
@@ -81,6 +81,6 @@ $app->map(['<method>'], '<url>', function (ServerRequestInterface $request, Resp
     /* your code here */
 
     return $response;
-});
+})->setName('list_reservations');
 
 return $app->add($authenticationMiddleware);
