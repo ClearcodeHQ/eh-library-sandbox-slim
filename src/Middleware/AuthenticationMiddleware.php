@@ -25,16 +25,19 @@ class AuthenticationMiddleware
     public function __invoke(ServerRequestInterface $request, ResponseInterface $response, $next)
     {
         /* your code here */
+        /* authenticate user using JWT token passed in the request */
 
         $email = null; /* assign email here */
 
         $user = $this->repository->get($email);
+        $isAuthenticated = $user instanceof User;
 
-        if ($user instanceof User) {
+        if ($isAuthenticated) {
             $request = $request->withAttribute('user', $user);
             $response = $next($request, $response);
         } else {
             /* your code here */
+            /* handle case where user is not authenticated */
         }
 
         return $response;
