@@ -167,4 +167,34 @@ class LibraryTest extends WebTestCase
         $this->assertThatResponseHasStatus(200);
         $this->assertCount(0, $this->jsonResponseData);
     }
+
+    /** @test */
+    public function it_gets_cached_books_list()
+    {
+        $this->addBook('a7f0a5b1-b65a-4f9b-905b-082e255f6038', 'Domain-Driven Design', 'Eric Evans', '0321125215');
+
+        //$minimumExpired = (new \DateTime('+1 second'))->format('D, d M Y H:i:s \G\M\T');
+
+        $this->request('GET', '/books');
+
+        $oldResponse = $this->jsonResponseData;
+
+        $this->assertCount(1, $oldResponse);
+        $this->assertThatResponseHasETagsHeader($oldResponse);
+
+        $this->request('GET', '/books', [], ['If-None-Match' => $this->getETag()]);
+
+        $this->assertThatResponseHasStatus(304);
+
+        $this->addBook('38483e7a-e815-4657-bc94-adc83047577e', 'REST in Practice', 'Jim Webber, Savas Parastatidis, Ian Robinson', '978-0596805821');
+
+        $this->request('GET', '/books');
+
+        $newResponse = $this->jsonResponseData;
+
+        $this->assertCount(2, $newResponse);
+        $this->assertThatResponseHasETagsHeader($newResponse);
+
+        $this->assertThatResponsesHaveDifferentETagHeaders($oldResponse, $newResponse);
+    }
 }
