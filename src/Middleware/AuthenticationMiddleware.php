@@ -4,7 +4,8 @@
 namespace Clearcode\EHLibrarySandbox\Slim\Middleware;
 
 
-use Clearcode\EHLibrary\Library;
+use Clearcode\EHLibraryAuth\Model\User;
+use Clearcode\EHLibraryAuth\Model\UserRepository;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
@@ -12,23 +13,29 @@ class AuthenticationMiddleware
 {
 
     /**
-     * @var Library
+     * @var UserRepository
      */
-    private $library;
+    private $repository;
 
-    public function __construct(Library $library)
+    public function __construct(UserRepository $repository)
     {
-        $this->library = $library;
+        $this->repository = $repository;
     }
 
-    public function __invoke(ServerRequestInterface $request, ResponseInterface $response, $next) {
-
+    public function __invoke(ServerRequestInterface $request, ResponseInterface $response, $next)
+    {
         /* your code here */
 
-        $user = null; /* assign user here */
+        $email = null; /* assign email here */
 
-        $request = $request->withAttribute('user', $user);
-        $response = $next($request, $response);
+        $user = $this->repository->get($email);
+
+        if ($user instanceof User) {
+            $request = $request->withAttribute('user', $user);
+            $response = $next($request, $response);
+        } else {
+            /* your code here */
+        }
 
         return $response;
     }

@@ -9,9 +9,17 @@
             "email": "lucaszz111@gmail.com"
         }
     ],
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "git@github.com:ClearcodeHQ/eh-library-auth.git"
+        }
+    ],
     "minimum-stability": "dev",
     "autoload": {
-        "psr-4" : { "Clearcode\\EHLibrarySandbox\\Slim\\": "src" }
+        "psr-4" : {
+            "Clearcode\\EHLibrarySandbox\\Slim\\": "src"
+        }
     },
     "autoload-dev": {
         "psr-4" : {
@@ -21,7 +29,8 @@
     "require": {
         "php": ">=5.5",
         "slim/slim": "^3.0@RC",
-        "clearcode/eh-library": "dev-master"
+        "clearcode/eh-library": "dev-master",
+        "clearcode/eh-library-auth": "dev-master"
     },
     "require-dev": {
         "phpunit/phpunit": "~4.5"
