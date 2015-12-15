@@ -4,41 +4,42 @@
 namespace Clearcode\EHLibrarySandbox\Slim\Middleware;
 
 
+use Clearcode\EHLibraryAuth\LibraryAuth;
 use Clearcode\EHLibraryAuth\Model\User;
-use Clearcode\EHLibraryAuth\Model\UserRepository;
+use Lcobucci\JWT\Parser;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
 class AuthenticationMiddleware
 {
+    /** @var LibraryAuth */
+    private $auth;
 
-    /**
-     * @var UserRepository
-     */
-    private $repository;
-
-    public function __construct(UserRepository $repository)
+    public function __construct(LibraryAuth $auth)
     {
-        $this->repository = $repository;
+        $this->auth = $auth;
     }
 
     public function __invoke(ServerRequestInterface $request, ResponseInterface $response, $next)
     {
+        $token = null; /* assign token here */
+
         /* your code here */
-        /* authenticate user using JWT token passed in the request */
 
-        $email = null; /* assign email here */
+        $this->auth->authenticate($token);
 
-        $user = $this->repository->get($email);
-        $isAuthenticated = $user instanceof User;
+        /* your code here */
 
-        if ($isAuthenticated) {
-            $request = $request->withAttribute('user', $user);
-            $response = $next($request, $response);
-        } else {
+        $token = (new Parser())->parse($token);
+
+        $user = $this->auth->getUser($token->getClaim('email'));
+
+        if (!$user instanceof User) {
             /* your code here */
-            /* handle case where user is not authenticated */
         }
+
+        $request = $request->withAttribute('user', $user);
+        $response = $next($request, $response);
 
         return $response;
     }

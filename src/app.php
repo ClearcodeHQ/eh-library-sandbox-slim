@@ -7,18 +7,29 @@ use Psr\Http\Message\ResponseInterface;
 use Clearcode\EHLibrarySandbox\Slim\Middleware\AuthenticationMiddleware;
 use Clearcode\EHLibrarySandbox\Slim\Middleware\AuthorizationMiddleware;
 use Ramsey\Uuid\Uuid;
+use Clearcode\EHLibraryAuth\Model\User;
 
 $app = new \Slim\App;
 $library = new \Clearcode\EHLibrary\Application();
 $auth = new \Clearcode\EHLibraryAuth\Application();
-$userRepository = new \Clearcode\EHLibraryAuth\Infrastructure\Persistence\LocalUserRepository();
-$authenticationMiddleware = new AuthenticationMiddleware($userRepository);
+$authenticationMiddleware = new AuthenticationMiddleware($auth);
 
-//Login user
+//Login user (login by email only - no password)
 $app->map(['<method>'], '<url>', function(ServerRequestInterface $request, ResponseInterface $response, $args = []) use ($auth /* dependencies */) {
 
     /* your code here */
-    /* return JWT in the response */
+
+    $email = null; /* assign email here */
+
+    $user = $auth->getUser($email);
+
+    if (!$user instanceof User) {
+        /* your code here */
+    }
+
+    $token = $auth->generateToken($user->email());
+
+    /* your code here */
 
     return $response;
 });
