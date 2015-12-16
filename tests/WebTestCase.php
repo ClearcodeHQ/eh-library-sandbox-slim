@@ -44,13 +44,13 @@ abstract class WebTestCase extends \PHPUnit_Framework_TestCase
         $this->reservations->save($reservation);
     }
 
-    protected function request($method, $url, array $requestParameters = [])
+    protected function request($method, $url, array $requestParameters = [], array $headers = [])
     {
-        $request = $this->prepareRequest($method, $url, $requestParameters);
+        $request = $this->prepareRequest($method, $url, $requestParameters, $headers);
         $response = new Response();
 
         $app = $this->app;
-        $this->response = $app($request, $response);
+        $this->response = $app->callMiddlewareStack($request, $response);
         $this->jsonResponseData = json_decode((string) $this->response->getBody(), true);
     }
 
@@ -62,6 +62,23 @@ abstract class WebTestCase extends \PHPUnit_Framework_TestCase
     protected function assertThatResponseHasContentType($expectedContentType)
     {
         $this->assertContains($expectedContentType, $this->response->getHeader('Content-Type'));
+    }
+
+    protected function assertThatResponseHasETagsHeader($response)
+    {
+        $this->assertContains('"' . md5(json_encode($response)) . '"', $this->response->getHeader('ETag'));
+    }
+
+    protected function assertThatResponsesHaveDifferentETagHeaders($oldResponse, $newResponse)
+    {
+        $oldETag = md5(json_encode($oldResponse));
+        $newETag = md5(json_encode($newResponse));
+        $this->assertNotEquals($oldETag, $newETag);
+    }
+
+    protected function getETag()
+    {
+        return current($this->response->getHeader('ETag'));
     }
 
     protected function assertThatResponseHasNotContentType()
@@ -95,7 +112,7 @@ abstract class WebTestCase extends \PHPUnit_Framework_TestCase
         return require __DIR__.'/../src/app.php';
     }
 
-    private function prepareRequest($method, $url, array $requestParameters)
+    private function prepareRequest($method, $url, array $requestParameters, array $requestHeaders)
     {
         $env = Environment::mock([
             'SCRIPT_NAME' => '/index.php',
@@ -111,6 +128,11 @@ abstract class WebTestCase extends \PHPUnit_Framework_TestCase
 
         $uri = Uri::createFromEnvironment($env);
         $headers = Headers::createFromEnvironment($env);
+
+        foreach ($requestHeaders as $headerName => $headerValue) {
+            $headers->add($headerName, $headerValue);
+        }
+
         $cookies = [];
 
         $serverParams = $env->all();

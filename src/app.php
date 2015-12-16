@@ -9,7 +9,14 @@ use Clearcode\EHLibrarySandbox\Slim\Middleware\AuthorizationMiddleware;
 use Ramsey\Uuid\Uuid;
 use Clearcode\EHLibraryAuth\Model\User;
 
-$app = new \Slim\App;
+$container = new \Slim\Container;
+$container['cache'] = function () {
+    return new \Slim\HttpCache\CacheProvider();
+};
+
+$app = new \Slim\App($container);
+$app->add(new \Slim\HttpCache\Cache('public', 86400));
+
 $library = new \Clearcode\EHLibrary\Application();
 $auth = new \Clearcode\EHLibraryAuth\Application();
 $authenticationMiddleware = new AuthenticationMiddleware($auth);

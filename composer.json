@@ -29,6 +29,7 @@
     "require": {
         "php": ">=5.5",
         "slim/slim": "^3.0@RC",
+        "slim/http-cache": "dev-master",
         "clearcode/eh-library": "dev-master",
         "clearcode/eh-library-auth": "dev-master"
     },
