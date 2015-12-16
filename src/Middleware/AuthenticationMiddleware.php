@@ -22,7 +22,7 @@ class AuthenticationMiddleware
 
     public function __invoke(ServerRequestInterface $request, ResponseInterface $response, $next)
     {
-        $token = null; /* assign token here */
+        $token = $request->getHeaderLine('XAuthorization'); // because Authorization is cutted for some reason
 
         /* your code here */
 
