@@ -9,7 +9,14 @@ use Clearcode\EHLibrarySandbox\Slim\Middleware\AuthorizationMiddleware;
 use Ramsey\Uuid\Uuid;
 use Clearcode\EHLibraryAuth\Model\User;
 
-$app = new \Slim\App;
+$container = new \Slim\Container;
+$container['cache'] = function () {
+    return new \Slim\HttpCache\CacheProvider();
+};
+
+$app = new \Slim\App($container);
+$app->add(new \Slim\HttpCache\Cache('public', 86400));
+
 $library = new \Clearcode\EHLibrary\Application();
 $auth = new \Clearcode\EHLibraryAuth\Application();
 $authenticationMiddleware = new AuthenticationMiddleware($auth);
@@ -35,7 +42,7 @@ $app->map(['<method>'], '<url1>', function(ServerRequestInterface $request, Resp
 });
 
 //Register new reader
-$app->map(['<method>'], '<url2', function(ServerRequestInterface $request, ResponseInterface $response, $args = []) use ($auth /* dependencies */) {
+$app->map(['<method>'], '<url2>', function(ServerRequestInterface $request, ResponseInterface $response, $args = []) use ($auth /* dependencies */) {
 
     /* your code here */
 
@@ -73,15 +80,14 @@ $app->map(['GET'], '/books', function (ServerRequestInterface $request, Response
 
     $content = json_encode($library->listOfBooks(/* arguments */));
 
-    /* your code here */
-
     $body = $response->getBody();
     $body->write($content);
 
-    $response = $response->withHeader('Content-Type', 'application/json');
+    //$response = $response->withHeader('Content-Type', 'application/json');
 
     $eTag = md5($content);
-    $response = $response->withHeader('ETag', $eTag);
+    $response = $this->cache->withEtag($response, $eTag);
+    /*$response = $response->withHeader('ETag', $eTag);
 
     //$response = $response->withHeader('Last-Modified', (new DateTime())->format('D, d M Y H:i:s \G\M\T'));
     //$response = $response->withHeader('Cache-Control', 'max-age=' . (time() + 60));
@@ -93,7 +99,7 @@ $app->map(['GET'], '/books', function (ServerRequestInterface $request, Response
         $response = $response->withStatus(304);
     } else {
         $response = $response->withBody($body);
-    }
+    }*/
 
     return $response;
 });
@@ -152,8 +158,8 @@ $app->map(['<method>'], '<url8>', function (ServerRequestInterface $request, Res
     /* your code here */
 
     return $response;
-})
-    ->add(new AuthorizationMiddleware(['reader', 'librarian']))
-    ->add($authenticationMiddleware);
+});
+    //->add(new AuthorizationMiddleware(['reader', 'librarian']))
+    //->add($authenticationMiddleware);
 
 return $app;

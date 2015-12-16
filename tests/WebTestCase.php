@@ -66,7 +66,7 @@ abstract class WebTestCase extends \PHPUnit_Framework_TestCase
 
     protected function assertThatResponseHasETagsHeader($response)
     {
-        $this->assertContains(md5(json_encode($response)), $this->response->getHeader('ETag'));
+        $this->assertContains('"' . md5(json_encode($response)) . '"', $this->response->getHeader('ETag'));
     }
 
     protected function assertThatResponsesHaveDifferentETagHeaders($oldResponse, $newResponse)
@@ -78,7 +78,7 @@ abstract class WebTestCase extends \PHPUnit_Framework_TestCase
 
     protected function getETag()
     {
-        return $this->response->getHeader('ETag');
+        return current($this->response->getHeader('ETag'));
     }
 
     protected function assertThatResponseHasNotContentType()
