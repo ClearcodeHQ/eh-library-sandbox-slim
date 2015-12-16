@@ -22,7 +22,7 @@ $auth = new \Clearcode\EHLibraryAuth\Application();
 $authenticationMiddleware = new AuthenticationMiddleware($auth);
 
 //Login user (login by email only - no password)
-$app->map(['<method>'], '<url1>', function(ServerRequestInterface $request, ResponseInterface $response, $args = []) use ($auth /* dependencies */) {
+$app->map(['<method>'], '<url>', function(ServerRequestInterface $request, ResponseInterface $response, $args = []) use ($auth /* dependencies */) {
 
     /* your code here */
 
@@ -42,7 +42,7 @@ $app->map(['<method>'], '<url1>', function(ServerRequestInterface $request, Resp
 });
 
 //Register new reader
-$app->map(['<method>'], '<url2>', function(ServerRequestInterface $request, ResponseInterface $response, $args = []) use ($auth /* dependencies */) {
+$app->map(['<method>'], '<url>', function(ServerRequestInterface $request, ResponseInterface $response, $args = []) use ($auth /* dependencies */) {
 
     /* your code here */
 
@@ -54,46 +54,36 @@ $app->map(['<method>'], '<url2>', function(ServerRequestInterface $request, Resp
 });
 
 //Add book to library
-$app->map(['POST'], '/books', function (ServerRequestInterface $request, ResponseInterface $response, $args = []) use ($library /* dependencies */) {
+$app->map(['<method>'], '<url>', function (ServerRequestInterface $request, ResponseInterface $response, $args = []) use ($library /* dependencies */) {
 
     /* your code here */
 
-    $body = $request->getParsedBody();
-    $title = $body['title'];
-    $authors = $body['authors'];
-    $isbn = $body['isbn'];
-
-    $bookId = isset($body['bookId']) ? Uuid::fromString($body['bookId']) : Uuid::uuid4();
-    $library->addBook($bookId, $title, $authors, $isbn);
+    $bookId = Uuid::uuid4();
+    $library->addBook($bookId /* arguments */);
 
     /* your code here */
 
     return $response;
-});
-    //->add(new AuthorizationMiddleware(['librarian']))
-    //->add($authenticationMiddleware);
+})
+    ->add(new AuthorizationMiddleware(['librarian']))
+    ->add($authenticationMiddleware);
 
 //List books in library
-$app->map(['GET'], '/books', function (ServerRequestInterface $request, ResponseInterface $response, $args = []) use ($library /* dependencies */) {
+$app->map(['<method>'], '<url>', function (ServerRequestInterface $request, ResponseInterface $response, $args = []) use ($library /* dependencies */) {
 
     /* your code here */
 
     $content = json_encode($library->listOfBooks(/* arguments */));
 
-    $body = $response->getBody();
-    $body->write($content);
-
-    $response = $response->withBody($body);
-    $response = $response->withHeader('Content-Type', 'application/json');
-    $response = $this->cache->withEtag($response, md5($content));
+    /* your code here */
 
     return $response;
-});
-    //->add(new AuthorizationMiddleware(['reader', 'librarian']))
-    //->add($authenticationMiddleware);
+})
+    ->add(new AuthorizationMiddleware(['reader', 'librarian']))
+    ->add($authenticationMiddleware);
 
 //Create reservation for book
-$app->map(['<method>'], '<url5>', function (ServerRequestInterface $request, ResponseInterface $response, $args = []) use ($library /* dependencies */) {
+$app->map(['<method>'], '<url>', function (ServerRequestInterface $request, ResponseInterface $response, $args = []) use ($library /* dependencies */) {
 
     /* your code here */
 
@@ -107,7 +97,7 @@ $app->map(['<method>'], '<url5>', function (ServerRequestInterface $request, Res
     ->add($authenticationMiddleware);;
 
 //Give away reservation for book
-$app->map(['<method>'], '<url6>', function (ServerRequestInterface $request, ResponseInterface $response, $args = []) use ($library /* dependencies */) {
+$app->map(['<method>'], '<url>', function (ServerRequestInterface $request, ResponseInterface $response, $args = []) use ($library /* dependencies */) {
 
     /* your code here */
 
@@ -121,7 +111,7 @@ $app->map(['<method>'], '<url6>', function (ServerRequestInterface $request, Res
     ->add($authenticationMiddleware);;
 
 //Give back book from reservation
-$app->map(['<method>'], '<url7>', function (ServerRequestInterface $request, ResponseInterface $response, $args = []) use ($library /* dependencies */) {
+$app->map(['<method>'], '<url>', function (ServerRequestInterface $request, ResponseInterface $response, $args = []) use ($library /* dependencies */) {
 
     /* your code here */
 
@@ -135,7 +125,7 @@ $app->map(['<method>'], '<url7>', function (ServerRequestInterface $request, Res
     ->add($authenticationMiddleware);
 
 //List reservations for book
-$app->map(['<method>'], '<url8>', function (ServerRequestInterface $request, ResponseInterface $response, $args = []) use ($library /* dependencies */) {
+$app->map(['<method>'], '<url>', function (ServerRequestInterface $request, ResponseInterface $response, $args = []) use ($library /* dependencies */) {
 
     /* your code here */
 
@@ -145,7 +135,7 @@ $app->map(['<method>'], '<url8>', function (ServerRequestInterface $request, Res
 
     return $response;
 });
-    //->add(new AuthorizationMiddleware(['reader', 'librarian']))
-    //->add($authenticationMiddleware);
+    ->add(new AuthorizationMiddleware(['reader', 'librarian']))
+    ->add($authenticationMiddleware);
 
 return $app;

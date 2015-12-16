@@ -173,8 +173,6 @@ class LibraryTest extends WebTestCase
     {
         $this->addBook('a7f0a5b1-b65a-4f9b-905b-082e255f6038', 'Domain-Driven Design', 'Eric Evans', '0321125215');
 
-        //$minimumExpired = (new \DateTime('+1 second'))->format('D, d M Y H:i:s \G\M\T');
-
         $this->request('GET', '/books');
 
         $oldResponse = $this->jsonResponseData;
