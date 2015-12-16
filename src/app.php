@@ -134,7 +134,7 @@ $app->map(['<method>'], '<url>', function (ServerRequestInterface $request, Resp
     /* your code here */
 
     return $response;
-});
+})
     ->add(new AuthorizationMiddleware(['reader', 'librarian']))
     ->add($authenticationMiddleware);
 
