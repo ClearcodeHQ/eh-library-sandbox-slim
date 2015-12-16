@@ -83,23 +83,9 @@ $app->map(['GET'], '/books', function (ServerRequestInterface $request, Response
     $body = $response->getBody();
     $body->write($content);
 
-    //$response = $response->withHeader('Content-Type', 'application/json');
-
-    $eTag = md5($content);
-    $response = $this->cache->withEtag($response, $eTag);
-    /*$response = $response->withHeader('ETag', $eTag);
-
-    //$response = $response->withHeader('Last-Modified', (new DateTime())->format('D, d M Y H:i:s \G\M\T'));
-    //$response = $response->withHeader('Cache-Control', 'max-age=' . (time() + 60));
-    //$response = $response->withHeader('Expires', (new DateTime('+1 hour'))->format('D, d M Y H:i:s \G\M\T'));
-
-    $ifNoneMatch = $request->getHeader('If-None-Match');
-
-    if ($ifNoneMatch && current($ifNoneMatch) == $eTag) {
-        $response = $response->withStatus(304);
-    } else {
-        $response = $response->withBody($body);
-    }*/
+    $response = $response->withBody($body);
+    $response = $response->withHeader('Content-Type', 'application/json');
+    $response = $this->cache->withEtag($response, md5($content));
 
     return $response;
 });

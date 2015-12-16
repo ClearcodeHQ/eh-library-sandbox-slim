@@ -50,7 +50,7 @@ abstract class WebTestCase extends \PHPUnit_Framework_TestCase
         $response = new Response();
 
         $app = $this->app;
-        $this->response = $app($request, $response);
+        $this->response = $app->callMiddlewareStack($request, $response);
         $this->jsonResponseData = json_decode((string) $this->response->getBody(), true);
     }
 
