@@ -26,6 +26,7 @@ class AuthorizationMiddleware
         } else {
             /* your code here */
             /* handle case where user is not authorized to access the resource */
+            return $response->withStatus(403);
         }
 
         return $response;

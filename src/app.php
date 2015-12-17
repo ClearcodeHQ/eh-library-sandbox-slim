@@ -8,6 +8,7 @@ use Clearcode\EHLibrarySandbox\Slim\Middleware\AuthenticationMiddleware;
 use Clearcode\EHLibrarySandbox\Slim\Middleware\AuthorizationMiddleware;
 use Ramsey\Uuid\Uuid;
 use Clearcode\EHLibraryAuth\Model\User;
+use Clearcode\EHLibrary\Infrastructure\Persistence\LocalReservationRepository;
 
 $container = new \Slim\Container;
 $container['cache'] = function () {
@@ -20,6 +21,8 @@ $app->add(new \Slim\HttpCache\Cache('public', 86400));
 $library = new \Clearcode\EHLibrary\Application();
 $auth = new \Clearcode\EHLibraryAuth\Application();
 $authenticationMiddleware = new AuthenticationMiddleware($auth);
+
+$reservationRepository = new LocalReservationRepository();
 
 //Login user (login by email only - no password)
 $app->map(['POST'], '/login', function(ServerRequestInterface $request, ResponseInterface $response, $args = []) use ($auth /* dependencies */) {
@@ -56,7 +59,13 @@ $app->map(['POST'], '/register', function(ServerRequestInterface $request, Respo
 
     $body = $request->getParsedBody();
 
-    $auth->registerUser($body['email'], ['reader']);
+    $roles = ['reader'];
+
+    if (isset($body['is_librarian']) && $body['is_librarian']) {
+        $roles[] = 'librarian';
+    }
+
+    $auth->registerUser($body['email'], $roles);
 
     /* your code here */
 
@@ -64,19 +73,31 @@ $app->map(['POST'], '/register', function(ServerRequestInterface $request, Respo
 });
 
 //Add book to library
-$app->map(['POST'], '/books', function (ServerRequestInterface $request, ResponseInterface $response, $args = []) use ($library /* dependencies */) {
+$app->map(['PUT'], '/books/{bookId}', function (ServerRequestInterface $request, ResponseInterface $response, $args = []) use ($library /* dependencies */) {
 
     /* your code here */
 
     $body = $request->getParsedBody();
+
+    $response = $response->withHeader('Content-Type', 'application/json');
+
+    if (!isset($body['title']) || !isset($body['authors']) || !isset($body['isbn'])) {
+        return $response->withStatus(400);
+    }
+
     $title = $body['title'];
     $authors = $body['authors'];
     $isbn = $body['isbn'];
 
-    $bookId = Uuid::uuid4();
+    $bookId = Uuid::fromString($args['bookId']);
     $library->addBook($bookId, $title, $authors, $isbn);
 
     /* your code here */
+    $body = $response->getBody();
+    $body->write(json_encode(['id' => $bookId]));
+
+    $response = $response->withBody($body);
+    $response = $response->withStatus(201);
 
     return $response;
 })
@@ -87,14 +108,19 @@ $app->map(['POST'], '/books', function (ServerRequestInterface $request, Respons
 $app->map(['GET'], '/books', function (ServerRequestInterface $request, ResponseInterface $response, $args = []) use ($library /* dependencies */) {
 
     /* your code here */
+    $queryParams = $request->getQueryParams();
+    $page = isset($queryParams['page']) ? $queryParams['page'] : 1;
+    $booksPerPage = isset($queryParams['booksPerPage']) ? $queryParams['booksPerPage'] : null;
 
-    $content = json_encode($library->listOfBooks(/* arguments */));
+    $content = json_encode($library->listOfBooks($page, $booksPerPage/* arguments */));
 
     $body = $response->getBody();
     $body->write($content);
 
     $response = $response->withBody($body);
     $response = $response->withHeader('Content-Type', 'application/json');
+
+    $response = $this->cache->withEtag($response, md5($content));
 
     /* your code here */
 
@@ -104,25 +130,61 @@ $app->map(['GET'], '/books', function (ServerRequestInterface $request, Response
     ->add($authenticationMiddleware);
 
 //Create reservation for book
-$app->map(['<method>'], '<url3>', function (ServerRequestInterface $request, ResponseInterface $response, $args = []) use ($library /* dependencies */) {
+$app->map(['POST'], '/reservations', function (ServerRequestInterface $request, ResponseInterface $response, $args = []) use ($library /* dependencies */) {
 
     /* your code here */
+    $body = $request->getParsedBody();
 
-    $library->createReservation(/* arguments */);
+    $response = $response->withHeader('Content-Type', 'application/json');
+
+    if (!isset($body['bookId'])) {
+        return $response->withStatus(400);
+    }
+
+    // commented because users email is retrieved from jwt token right now
+    /*if (!isset($body['email'])) {
+        return $response->withStatus(400);
+    }*/
+
+    $bookId = Uuid::fromString($body['bookId']);
+
+    //$email = $body['email'];
+    $user = $request->getAttribute('user');
+
+    //$library->createReservation(Uuid::uuid4(), $bookId, $email);
+    $library->createReservation(Uuid::uuid4(), Uuid::fromString($bookId), $user->email());
 
     /* your code here */
+    $body = $response->getBody();
+    $body->write(json_encode(['id' => $bookId]));
+
+    $response = $response->withBody($body);
+    $response = $response->withStatus(201);
 
     return $response;
 })
     ->add(new AuthorizationMiddleware(['reader', 'librarian']))
-    ->add($authenticationMiddleware);;
+    ->add($authenticationMiddleware);
 
 //Give away reservation for book
-$app->map(['<method>'], '<url4>', function (ServerRequestInterface $request, ResponseInterface $response, $args = []) use ($library /* dependencies */) {
+$app->map(['PATCH'], '/reservations/{reservationId}', function (ServerRequestInterface $request, ResponseInterface $response, $args = []) use ($library, $reservationRepository /* dependencies */) {
 
     /* your code here */
 
-    $library->giveAwayBookInReservation(/* arguments */);
+    $reservationId = Uuid::fromString($args['reservationId']);
+
+    $reservation = $reservationRepository->get($reservationId);
+
+    $response = $response->withHeader('Content-Type', 'application/json');
+
+    if ($reservation->isGivenAway()) {
+        return $response->withStatus(400);
+    }
+
+    $body = $request->getParsedBody();
+    $givenAwayAt = new \DateTime($body['givenAwayAt']);
+
+    $library->giveAwayBookInReservation($reservationId, $givenAwayAt);
 
     /* your code here */
 
@@ -132,13 +194,22 @@ $app->map(['<method>'], '<url4>', function (ServerRequestInterface $request, Res
     ->add($authenticationMiddleware);;
 
 //Give back book from reservation
-$app->map(['<method>'], '<url5>', function (ServerRequestInterface $request, ResponseInterface $response, $args = []) use ($library /* dependencies */) {
+$app->map(['DELETE'], '/reservations/{reservationId}', function (ServerRequestInterface $request, ResponseInterface $response, $args = []) use ($library, $reservationRepository /* dependencies */) {
 
     /* your code here */
+    $reservationId = Uuid::fromString($args['reservationId']);
 
-    $library->giveBackBookFromReservation(/* arguments */);
+    $reservation = $reservationRepository->get($reservationId);
+
+    if (!$reservation->isGivenAway()) {
+        $response = $response->withHeader('Content-Type', 'application/json');
+        return $response->withStatus(400);
+    }
+
+    $library->giveBackBookFromReservation($reservationId);
 
     /* your code here */
+    $response = $response->withStatus(204);
 
     return $response;
 })
@@ -146,13 +217,23 @@ $app->map(['<method>'], '<url5>', function (ServerRequestInterface $request, Res
     ->add($authenticationMiddleware);
 
 //List reservations for book
-$app->map(['<method>'], '<url6>', function (ServerRequestInterface $request, ResponseInterface $response, $args = []) use ($library /* dependencies */) {
+$app->map(['GET'], '/reservations', function (ServerRequestInterface $request, ResponseInterface $response, $args = []) use ($library /* dependencies */) {
 
     /* your code here */
 
-    $content = json_encode($library->listReservationsForBook(/* arguments */));
+    $bookId = $request->getParam('bookId');
+
+    $content = [];
+    if (isset($bookId)) {
+        $content = $library->listReservationsForBook(Uuid::fromString($bookId));
+    }
 
     /* your code here */
+    $body = $response->getBody();
+    $body->write(json_encode($content));
+
+    $response = $response->withBody($body);
+    $response = $response->withHeader('Content-Type', 'application/json');
 
     return $response;
 })
